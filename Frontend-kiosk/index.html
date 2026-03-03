@@ -9,11 +9,18 @@
         .current { background: #e74c3c; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
         .next { background: #34495e; padding: 15px; border-radius: 10px; text-align: left; }
         h2 { border-bottom: 2px solid white; padding-bottom: 10px; }
+        /* Style pour la salle libre (vert) */
+.free { 
+    background: #27ae60; /* Un beau vert émeraude */
+    padding: 20px; 
+    border-radius: 10px; 
+    margin-bottom: 30px; 
+}
     </style>
 </head>
 <body>
     <div class="room-name">SALLE 1</div> <div class="current">
-        <h2>En cours</h2>
+        <h2>Occupée</h2>
         <p id="meeting-title">Réunion Direction</p> <p id="meeting-time">14:00 - 15:30</p> </div>
 
     <div class="next">
@@ -21,5 +28,17 @@
         <ul>
             <li>16:00 - Point Projet Dev</li> <li>17:30 - Entretien RH</li> </ul>
     </div>
+    <div class="room-name">SALLE 2</div>
+<div class="free">
+    <h2>Libre</h2>
+    <p>Aucune réunion en cours</p>
+</div>
+
+<div class="next">
+    <h3>À venir :</h3>
+    <ul>
+        <li>14:30 - Briefing Équipe</li>
+    </ul>
+</div>
 </body>
 </html>
