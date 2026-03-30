@@ -1,4 +1,4 @@
-const API_URL       = 'http://192.168.1.454';  
+const API_URL       = 'http://192.168.1.45';  
 const REFRESH_MS    = 15000;
 
 const params  = new URLSearchParams(window.location.search); 
