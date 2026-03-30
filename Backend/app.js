@@ -24,10 +24,11 @@ const reservations = db.prepare(
 'SELECT * FROM bookings WHERE room_id = ? ORDER BY start_time ASC'
 ).all(id);
 res.json(reservations);
+res.status(201).json(nouvelleReservation);
 });
 
 
-app.get('/api.reservations', (req, res) => {
+app.get('/api/reservations', (req, res) => {
 const reservations = db.prepare(
     'SELECT b.*, r.name as room_name FROM bookings b JOIN rooms r ON b.room_id = r.id'
 ).all();
@@ -35,11 +36,11 @@ res.json(reservations);
 });
 
 
-app.post('/reservations', (req, res) => {
+app.post('/api/reservations', (req, res) => {
     const { room_id, title, start_time, end_time, organizer } = req.body;
     const stmt = db.prepare('INSERT INTO bookings (room_id, title, start_time, end_time, organizer) VALUES (?, ?, ?, ?, ?)');
     const info = stmt.run(room_id, title, start_time, end_time, organizer);
-
+    const nouvelleReservation = {id: info.lastInsertRowid,room_id,title,start_time,end_time,organizer}
     res.json({ message: "Réservation réussie !", id: info.lastInsertRowid });
 });
 

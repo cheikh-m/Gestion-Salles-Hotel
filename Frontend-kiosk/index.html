@@ -1,366 +1,115 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Salles - Star Hotel</title>
-    <style>
-        :root {
-            /* Couleurs extraites de tes captures */
-            --bg-page: #152847;      /* Le bleu très sombre du fond */
-            --bg-card: #1c2533;      /* Le fond des zones de planning */
-            --free-green: #2ecc71;   /* Vert émeraude */
-            --busy-red: rgb(187, 6, 6);    /* Rouge */
-            --text-main: #ffffff;
-            --text-dim: #94a3b8;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            background-color: var(--bg-page); /* LA COULEUR DE FOND DEMANDÉE */
-            color: var(--text-main);
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        .global-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            padding: 0 10px;
-        }
-
-        .current-time { font-size: 3rem; font-weight: 300; line-height: 1; }
-        .current-date { color: var(--text-dim); font-size: 1.2rem; text-transform: capitalize; }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        /* Carte de salle */
-        .room-card {
-            display: flex;
-            height: 350px;
-            border-radius: 20px;
-            overflow: hidden;
-            background-color: var(--bg-card);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
-        /* Zone d'état (Gauche) */
-        .status-zone {
-            flex: 1.5;
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .is-free { background-color: var(--free-green); }
-        .is-busy { background-color: var(--busy-red); }
-
-        .room-info span { font-size: 0.9rem; letter-spacing: 2px; opacity: 0.8; }
-        .room-info h1 { font-size: 3.5rem; margin: 5px 0; }
-
-        .status-label {
-            font-size: 2rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            border-top: 1px solid rgba(255,255,255,0.3);
-            padding-top: 15px;
-        }
-
-        /* Planning (Droite) */
-        .schedule-zone {
-            flex: 1;
-            padding: 30px;
-            background-color: rgba(0,0,0,0.2); /* Léger contraste avec le fond */
-        }
-
-        .schedule-zone h3 { margin: 0 0 20px 0; color: var(--text-dim); font-weight: 400; }
-
-        .schedule-item {
-            margin-bottom: 20px;
-            padding-left: 15px;
-            border-left: 4px solid white;
-        }
-
-        .item-free { border-left-color: var(--free-green); }
-        .item-busy { border-left-color: var(--busy-red); }
-
-        /* Boutons */
-        .quick-booking { display: flex; gap: 15px; }
-        /* Style pour le bouton ICI */
-.btn-text {
-    background-color: rgba(255, 255, 255, 0.2); /* Fond semi-transparent */
-    color: white;
-    border: 1px solid white;
-    padding: 5px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s ease;
-    margin-left: 10px;
-}
-
-.btn-text:hover {
-    background-color: white;
-    color: #28a745; /* Le texte devient vert au survol */
-}
-
-/* Classe pour changer l'état en rouge via JS */
-.is-busy {
-    background-color: #d9534f !important; /* Rouge */
-}
-
-/* Fond de la modale */
-.modal {
-    display: none; 
-    position: fixed;
-    z-index: 1000;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.6);
-    backdrop-filter: blur(5px);
-}
-
-/* Boîte de dialogue */
-.modal-content {
-    background-color: #1a1a1a;
-    color: white;
-    margin: 10% auto;
-    padding: 30px;
-    border-radius: 15px;
-    width: 400px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-} 
-
-.btn-liberer {
-    background-color: transparent;
-    color: white;
-    border: 2px solid white;
-    padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    text-transform: uppercase;
-    transition: 0.3s;
-}
-
-.btn-liberer:hover {
-    background-color: white;
-    color: #d9534f; /* Le texte devient rouge au survol */
-}
-
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; margin-bottom: 8px; color: #ccc; }
-.form-group input, .form-group select {
-    width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #444;
-    background: #333; color: white;
-}
-
-.modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
-
-/* Boutons */
-.btn-primary { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; flex: 2; }
-.btn-secondary { background: #555; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; flex: 1; }
-
-
-    </style>
-</head>
-<body>
-
-    <div class="global-header">
-        <div>
-            <div class="current-date" id="date-text">Chargement...</div>
-            <div class="current-time" id="clock-text">00:00</div>
-        </div>
-        <div style="opacity: 0.4">BOOKING ROOM</div>
-    </div>
-
-    <div class="container">
-        
-        <div class="room-card">
-            <div class="status-zone is-free">
-                <div class="room-info">
-                    <span>Star-Hotel</span>
-                    <h1>Salle 1</h1>
-                </div>
-                <div class="quick-booking">
-                    <p><strong>Appuyer pour reserver</strong></p>
-                    <button class="btn-text">ICI</button>
-                </div>
-                <div class="status-label">LIBRE Actuellement</div>
-            </div>
-            <div class="schedule-zone">
-                <h3>À venir</h3>
-                <div class="schedule-item item-free">
-                    <div style="color:var(--text-dim)">15:00 - 16:30</div>
-                    <div>Reunion Marqueting commercial</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="room-card">
-            <div class="status-zone is-busy">
-                <div class="room-info">
-                    <span>Star-Hotel</span>
-                    <h1>Salle 2</h1>
-                </div>
-                <div style="font-size: 1.4rem">
-                    <strong>Réunion :</strong> Compta mensuelle<br>
-                    Fin : 15:00
-                </div>
-                <div class="status-label">OCCUPÉE</div>
-            </div>
-            <div class="schedule-zone">
-                <h3>À venir</h3>
-                <div class="schedule-item item-busy">
-                    <div style="color:var(--text-dim)">16:00 - 17:00</div>
-                    <div>Entretien RH</div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-    <div id="bookingModal" class="modal">
-    <div class="modal-content">
-        <h2>Réservation - Salle 1</h2>
-        <form id="reservationForm">
-            <div class="form-group">
-                <label>Nom de la réunion</label>
-                <input type="text" id="meetingName" placeholder="Ex: Briefing Commercial" required>
-            </div>
-            <div class="form-group">
-                <label>Durée</label>
-                <select id="meetingDuration">
-                    <option value="30">30 minutes</option>
-                    <option value="60">1 heure</option>
-                    <option value="90">1h 30min</option>
-                </select>
-            </div>
-            <div class="modal-buttons">
-                <button type="button" id="btnRetour" class="btn-secondary">Retour</button>
-                <button type="submit" class="btn-primary">Valider la réservation</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-    <script>
-    
-    // On sélectionne le bouton par sa classe
-    const boutonIci = document.querySelector('.btn-text');
-    
-    // On écoute le clic sur le bouton
-    boutonIci.addEventListener('click', function() {
-        // On cherche le conteneur de la salle (la zone de statut)
-        const zoneStatut = this.closest('.status-zone');
-        const labelStatut = zoneStatut.querySelector('.status-label');
-        
-        // 1. Changer la couleur : on enlève 'is-free' et on met 'is-busy'
-        zoneStatut.classList.remove('is-free');
-        zoneStatut.classList.add('is-busy');
-        
-        // 2. Changer le texte "LIBRE Actuellement"
-        labelStatut.innerText = "OCCUPÉE Actuellement";
-        
-        // 3. Faire disparaître le bouton après le clic
-        this.style.display = 'none';
-        
-        console.log("Salle 1 réservée !");
-    });
-        function update() {
-            const now = new Date();
-            // Heure
-            document.getElementById('clock-text').textContent = 
-                now.getHours().toString().padStart(2, '0') + ":" + 
-                now.getMinutes().toString().padStart(2, '0');
-            // Date
-            const opt = { weekday: 'long', day: 'numeric', month: 'long' };
-            document.getElementById('date-text').textContent = now.toLocaleDateString('fr-FR', opt);
-        }
-        setInterval(update, 1000);
-        update();
-        const modal = document.getElementById('bookingModal');
-const btnIci = document.querySelector('.btn-text');
-const btnRetour = document.getElementById('btnRetour');
-const form = document.getElementById('reservationForm');
-
-// 1. Ouvrir le formulaire
-btnIci.onclick = function() {
-    modal.style.display = "block";
-}
-
-// 2. Bouton Retour
-btnRetour.onclick = function() {
-    modal.style.display = "none";
-}
-
-// 3. Valider le formulaire
-form.onsubmit = function(e) {
-    e.preventDefault(); // Empêche la page de se recharger
-    
-    // Récupérer les infos
-    const sujet = document.getElementById('meetingName').value;
-    
-    // Changer l'affichage de la salle (comme sur votre image Salle 2)
-    const statusZone = document.querySelector('.status-zone');
-    statusZone.classList.remove('is-free');
-    statusZone.classList.add('is-busy');
-    
-    const labelStatut = statusZone.querySelector('.status-label');
-    labelStatut.innerHTML = `OCCUPÉE <br> <small>Réunion: ${sujet}</small>`;
-    
-    // Fermer la modale
-    modal.style.display = "none";
-}
-// Sélectionne les éléments
-const statusZone = document.querySelector('.status-zone');
-const statusLabel = document.querySelector('.status-label');
-const quickBookingSection = document.querySelector('.quick-booking');
-
-// Fonction pour LIBÉRER la salle
-function libererSalle() {
-    // 1. Remettre les classes CSS
-    statusZone.classList.remove('is-busy');
-    statusZone.classList.add('is-free');
-    
-    // 2. Remettre le texte d'origine
-    statusLabel.innerText = "LIBRE Actuellement";
-    
-    // 3. Remettre le bouton "ICI"
-    quickBookingSection.innerHTML = `
-        <p><strong>Appuyer pour reserver</strong></p>
-        <button class="btn-text" id="btn-ouvrir-modal">ICI</button>
-    `;
-    
-    // On réattache l'événement au nouveau bouton "ICI"
-    document.getElementById('btn-ouvrir-modal').onclick = ouvrirLaModal;
-}
-
-// Dans ton code de validation du formulaire (form.onsubmit) :
-form.onsubmit = function(e) {
-    e.preventDefault();
-    
-    // ... ton code actuel pour mettre en rouge ...
-    
-    // On remplace le contenu de la section réservation par le bouton de retour
-    quickBookingSection.innerHTML = `
-        <button class="btn-liberer" id="btn-liberer">Libérer la salle</button>
-    `;
-    
-    // On attache la fonction de libération au bouton
-    document.getElementById('btn-liberer').onclick = libererSalle;
-    
-    modal.style.display = "none";
-}
-    </script>
-</body>
+<!DOCTYPE html> 
+<html lang='fr'> 
+<head> 
+  <meta charset='UTF-8'> 
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'> 
+  <title>Affichage Salle</title> 
+  <style> 
+    /* Styles pour un affichage lisible à 2-3 mètres de distance */ 
+    * { margin:0; padding:0; box-sizing:border-box; } 
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #0A1628; color: white; 
+      min-height: 100vh; display: flex; 
+      flex-direction: column; 
+    } 
+  
+    /* En-tête : nom de la salle + horloge */ 
+    .header { 
+      background: #C9A84C; color: #0A1628; 
+      padding: 20px 32px; display: flex; 
+      justify-content: space-between; align-items: center; 
+    } 
+    .salle-nom  { font-size: 32px; font-weight: bold; } 
+    .horloge    { font-size: 36px; font-weight: bold; } 
+    .date-ligne { font-size: 16px; text-align: right; } 
+  
+    /* Zone principale : réunion en cours */ 
+    .en-cours { 
+      flex: 1; display: flex; flex-direction: column; 
+      justify-content: center; align-items: center; 
+      padding: 32px; text-align: center; 
+    }
+     .badge-statut { 
+      display: inline-block; padding: 8px 24px; 
+      border-radius: 100px; font-size: 16px; font-weight: bold; 
+      margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; 
+    } 
+    .badge-occupee  { background: #b50e0e; } 
+    .badge-libre    { background: #0d873a; } 
+    .badge-bientot  { background: #bf6b0b; } 
+  
+    .titre-reunion  { font-size: 52px; font-weight: bold; margin-bottom: 12px; } 
+    .horaires       { font-size: 28px; color: #C9A84C; margin-bottom: 8px; } 
+    .organisateur   { font-size: 20px; color: #d1dbed; } 
+  
+    /* Zone suivante : prochains événements */ 
+    .prochains { 
+      background: #1A3A6B; padding: 20px 32px; 
+    } 
+    .prochains h3 { 
+      font-size: 16px; color: #C9A84C; text-transform: uppercase; 
+      letter-spacing: 2px; margin-bottom: 14px; 
+    } 
+    .prochain-item { 
+      display: flex; justify-content: space-between; 
+      padding: 10px 0; border-top: 1px solid rgba(255,255,255,.1); 
+      font-size: 18px; 
+    } 
+    .prochain-heure { color: #C9A84C; font-weight: bold; min-width: 120px; } 
+  
+    /* Barre de progression */ 
+    .barre-progression { 
+      height: 6px; background: rgba(255,255,255,.1); 
+    } 
+    .barre-fill { 
+      height: 100%; background: #C9A84C; 
+      transition: width 1s linear; 
+    } 
+  
+    /* Message hors ligne */ 
+    .hors-ligne { 
+      display: none; position: fixed; bottom: 20px; left: 50%; 
+      transform: translateX(-50%); 
+      background: #DC2626; color: white; 
+      padding: 10px 24px; border-radius: 8px; font-size: 16px; 
+    } 
+    .hors-ligne.visible { display: block; } 
+  </style> 
+</head> 
+<body> 
+  <!-- En-tête --> 
+  <div class='header'> 
+    <div class='salle-nom' id='nom-salle'>Chargement...</div> 
+    <div> 
+      <div class='horloge' id='horloge'>--:--</div> 
+      <div class='date-ligne' id='date-ligne'>--</div> 
+    </div> 
+  </div>
+    <!-- Barre de progression de la réunion en cours --> 
+  <div class='barre-progression'><div class='barre-fill' id='barre' 
+style='width:0%'></div></div> 
+  
+  <!-- Zone réunion en cours --> 
+  <div class='en-cours'> 
+    <div class='badge-statut badge-libre' id='badge'>DISPONIBLE</div> 
+    <div class='titre-reunion' id='titre-reunion'>Salle libre</div> 
+    <div class='horaires' id='horaires'></div> 
+    <div class='organisateur' id='organisateur'></div> 
+  </div> 
+  
+  <!-- Prochains événements --> 
+  <div class='prochains'> 
+    <h3>Prochains événements</h3> 
+    <div id='liste-prochains'> 
+      <p style='color:#6B7280;font-size:16px;'>Aucune réunion prévue</p> 
+    </div> 
+  </div> 
+  
+  <!-- Message réseau indisponible --> 
+  <div class='hors-ligne' id='hors-ligne'>⚠ Réseau indisponible — Nouvelle 
+tentative dans 30s</div> 
+  
+  <script src='kiosk.js'></script> 
+</body> 
 </html>
